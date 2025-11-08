@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PharmaChain Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  </head>
+  <body>
+    <div class="d-flex">
+      <!-- Sidebar -->
+      <nav id="sidebar" class="flex-shrink-0 p-3 border-end bg-white" style="width: 260px;">
+        <a href="#" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-dark text-decoration-none">
+          <i class="bi bi-capsule me-2 fs-4 text-primary"></i>
+          <span class="fs-5 fw-semibold">PharmaChain</span>
+        </a>
+        <hr />
+        <ul class="nav nav-pills flex-column mb-auto" id="navLinks">
+          <li class="nav-item">
+            <a href="#overview" class="nav-link active" data-section="overview"><i class="bi bi-speedometer2 me-2"></i>Dashboard Overview</a>
+          </li>
+          <li>
+            <a href="#request" class="nav-link" data-section="request"><i class="bi bi-plus-circle me-2"></i>Create Request</a>
+          </li>
+          <li>
+            <a href="#traceability" class="nav-link" data-section="traceability"><i class="bi bi-diagram-3 me-2"></i>Drug Traceability</a>
+          </li>
+          <li>
+            <a href="#map" class="nav-link" data-section="map"><i class="bi bi-geo-alt me-2"></i>Live Tracking</a>
+          </li>
+          <li>
+            <a href="#iot" class="nav-link" data-section="iot"><i class="bi bi-thermometer-sun me-2"></i>IoT Monitoring</a>
+          </li>
+          <li>
+            <a href="#fda" class="nav-link" data-section="fda"><i class="bi bi-shield-check me-2"></i>FDA Approvals</a>
+          </li>
+          <li>
+            <a href="#alerts" class="nav-link" data-section="alerts"><i class="bi bi-exclamation-triangle me-2"></i>Alerts & Anomalies</a>
+          </li>
+          <li>
+            <a href="#reports" class="nav-link" data-section="reports"><i class="bi bi-file-earmark-text me-2"></i>Reports & Logs</a>
+          </li>
+        </ul>
+        <hr />
+        <div class="role-box small">
+          <div class="fw-semibold mb-1">User Role</div>
+          <select class="form-select form-select-sm" id="roleSwitcher">
+            <option value="FDA" selected>FDA</option>
+            <option value="Manufacturer">Manufacturer</option>
+            <option value="Distributor">Distributor</option>
+            <option value="Pharmacy">Pharmacy</option>
+          </select>
+        </div>
+      </nav>
+
+      <!-- Main content -->
+      <div class="flex-grow-1">
+        <!-- Topbar -->
+        <header class="d-flex align-items-center justify-content-between border-bottom px-3 py-2 bg-light">
+          <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-outline-secondary btn-sm d-md-none" id="toggleSidebar" aria-label="Toggle sidebar">
+              <i class="bi bi-list"></i>
+            </button>
+            <h1 class="h5 m-0">PharmaChain Supply Traceability</h1>
+          </div>
+          <div class="d-flex align-items-center gap-3">
+            <span class="text-secondary d-none d-sm-inline">Role: <span id="roleTop">FDA</span></span>
+            <div class="dropdown">
+              <button class="btn btn-outline-primary btn-sm position-relative dropdown-toggle" type="button" id="notificationDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
+                <i class="bi bi-bell"></i>
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="notifyCount">3</span>
+              </button>
+              <ul class="dropdown-menu dropdown-menu-end shadow" id="notificationList" style="width: 360px; max-height: 500px; overflow-y: auto;">
+                <li class="dropdown-header d-flex justify-content-between align-items-center">
+                  <span><i class="bi bi-bell-fill me-2"></i>Notifications</span>
+                  <button class="btn btn-sm btn-link text-secondary p-0" id="markAllRead" style="font-size: 0.75rem;">Mark all read</button>
+                </li>
+                <li><hr class="dropdown-divider" /></li>
+                <div id="notificationItems"><div class="px-3 py-2 text-center text-secondary small">Loading notifications...</div></div>
+                <li><hr class="dropdown-divider" /></li>
+                <li class="dropdown-item-text text-center">
+                  <button class="btn btn-sm btn-outline-secondary w-100" id="viewAllNotifications">View All Notifications</button>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </header>
+
+        <main class="p-3 p-md-4">
+          <!-- Overview -->
+          <section id="section-overview" class="section">
+            <div class="row g-3">
+              <div class="col-12 col-sm-6 col-lg-3">
+                <div class="card kpi-card">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div>
+                        <div class="text-secondary small" id="kpiLabelBatches">Total Batches Tracked</div>
+                        <div class="fs-3 fw-bold" id="kpiBatches">—</div>
+                      </div>
+                      <i class="bi bi-box-seam text-primary fs-2"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-sm-6 col-lg-3">
+                <div class="card kpi-card">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div>
+                        <div class="text-secondary small" id="kpiLabelApprovals">FDA Approvals Pending</div>
+                        <div class="fs-3 fw-bold" id="kpiApprovals">—</div>
+                      </div>
+                      <i class="bi bi-shield-exclamation text-warning fs-2"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-sm-6 col-lg-3">
+                <div class="card kpi-card">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div>
+                        <div class="text-secondary small" id="kpiLabelAlerts">Active Alerts</div>
+                        <div class="fs-3 fw-bold" id="kpiAlerts">—</div>
+                      </div>
+                      <i class="bi bi-exclamation-octagon text-danger fs-2"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-sm-6 col-lg-3">
+                <div class="card kpi-card">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between">
+                      <div>
+                        <div class="text-secondary small" id="kpiLabelTransit">Drugs in Transit</div>
+                        <div class="fs-3 fw-bold" id="kpiTransit">—</div>
+                      </div>
+                      <i class="bi bi-truck text-success fs-2"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Create Request -->
+          <section id="section-request" class="section d-none">
+            <h2 class="h5 mb-3">Create Medicine Request</h2>
+            <div class="row g-3">
+              <div class="col-12 col-lg-6">
+                <div class="card">
+                  <div class="card-header">
+                    <i class="bi bi-plus-circle me-2"></i>New Medicine Request
+                  </div>
+                  <div class="card-body">
+                    <form id="requestForm">
+                      <div class="mb-3">
+                        <label for="medicineName" class="form-label">Medicine Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="medicineName" placeholder="e.g., Paracetamol 500mg" required />
+                      </div>
+                      <div class="mb-3">
+                        <label for="quantity" class="form-label">Quantity <span class="text-danger">*</span></label>
+                        <input type="number" class="form-control" id="quantity" placeholder="e.g., 1000" min="1" required />
+                        <small class="text-secondary">Number of units</small>
+                      </div>
+                      <div class="mb-3">
+                        <label for="manufacturerSelect" class="form-label">Manufacturer <span class="text-danger">*</span></label>
+                        <select class="form-select" id="manufacturerSelect" required>
+                          <option value="">Select Manufacturer</option>
+                          <option value="Acme Pharma">Acme Pharma</option>
+                          <option value="NovaMed">NovaMed</option>
+                          <option value="HealthGen">HealthGen</option>
+                          <option value="BioCore">BioCore</option>
+                        </select>
+                      </div>
+                      <div class="mb-3">
+                        <label for="priority" class="form-label">Priority</label>
+                        <select class="form-select" id="priority">
+                          <option value="Normal" selected>Normal</option>
+                          <option value="High">High</option>
+                          <option value="Urgent">Urgent</option>
+                        </select>
+                      </div>
+                      <div class="mb-3">
+                        <label for="requestNotes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="requestNotes" rows="3" placeholder="Additional information about the request"></textarea>
+                      </div>
+                      <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-check-circle me-2"></i>Create Request
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-lg-6">
+                <div class="card h-100">
+                  <div class="card-header">
+                    <i class="bi bi-clock-history me-2"></i>Recent Requests
+                  </div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-sm align-middle">
+                        <thead class="table-light">
+                          <tr>
+                            <th>Medicine</th>
+                            <th>Status</th>
+                            <th>Request Time</th>
+                          </tr>
+                        </thead>
+                        <tbody id="recentRequestsTable"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Traceability -->
+          <section id="section-traceability" class="section d-none">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-3">
+              <h2 class="h5 m-0">Drug Traceability</h2>
+              <div class="d-flex flex-column flex-sm-row gap-2">
+                <div class="input-group" style="max-width: 360px;">
+                  <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  <input type="text" class="form-control" id="traceSearch" placeholder="Search by Batch ID, Manufacturer, Status" />
+                </div>
+                <div class="input-group" style="max-width: 200px;">
+                  <span class="input-group-text">Rows</span>
+                  <select class="form-select" id="tracePageSize">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="20">20</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+            <div class="table-responsive">
+              <table class="table table-sm align-middle table-hover" id="traceTable">
+                <thead class="table-light">
+                  <tr>
+                    <th data-key="batchId" class="sortable">Batch ID <i class="bi bi-arrow-down-up"></i></th>
+                    <th data-key="manufacturer" class="sortable">Manufacturer <i class="bi bi-arrow-down-up"></i></th>
+                    <th data-key="status" class="sortable">Status <i class="bi bi-arrow-down-up"></i></th>
+                    <th>Request Time</th>
+                    <th>Packaging Time</th>
+                    <th>Delivery Time</th>
+                    <th data-key="location" class="">Location</th>
+                  </tr>
+                </thead>
+                <tbody id="traceTableBody"></tbody>
+              </table>
+            </div>
+            <div class="d-flex align-items-center justify-content-between mt-2">
+              <div class="small text-secondary" id="tracePagerInfo">—</div>
+              <div class="btn-group btn-group-sm" role="group" aria-label="Pagination">
+                <button class="btn btn-outline-secondary" id="tracePrev">Prev</button>
+                <button class="btn btn-outline-secondary" id="traceNext">Next</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- IoT Monitoring -->
+          <section id="section-iot" class="section d-none">
+            <h2 class="h5">IoT Monitoring</h2>
+            <div class="row g-3 mb-3">
+              <div class="col-12 col-lg-4">
+                <div class="card h-100">
+                  <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Temperature Trends</span>
+                    <span class="badge bg-info">°C</span>
+                  </div>
+                  <div class="card-body"><canvas id="tempChart" height="150"></canvas></div>
+                </div>
+              </div>
+              <div class="col-12 col-lg-4">
+                <div class="card h-100">
+                  <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Humidity Levels</span>
+                    <span class="badge bg-success">%</span>
+                  </div>
+                  <div class="card-body"><canvas id="humidChart" height="150"></canvas></div>
+                </div>
+              </div>
+              <div class="col-12 col-lg-4">
+                <div class="card h-100">
+                  <div class="card-header d-flex justify-content-between align-items-center">
+                    <span>Pressure Readings</span>
+                    <span class="badge bg-warning">kPa</span>
+                  </div>
+                  <div class="card-body"><canvas id="pressChart" height="150"></canvas></div>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">Recent IoT Alerts</div>
+              <div class="card-body">
+                <ul class="list-group list-group-flush" id="iotAlertList"></ul>
+              </div>
+            </div>
+          </section>
+
+          <!-- FDA Approvals -->
+          <section id="section-fda" class="section d-none">
+            <h2 class="h5">FDA Approvals</h2>
+            <div class="row g-3">
+              <div class="col-12 col-lg-5">
+                <div class="card">
+                  <div class="card-header">Batch Approval Request</div>
+                  <div class="card-body">
+                    <form id="approvalForm">
+                      <div class="mb-3">
+                        <label for="batchIdInput" class="form-label">Batch ID</label>
+                        <input id="batchIdInput" type="text" class="form-control" placeholder="e.g., BATCH-001" />
+                      </div>
+                      <div class="mb-3">
+                        <label for="manufacturerInput" class="form-label">Manufacturer</label>
+                        <input id="manufacturerInput" type="text" class="form-control" placeholder="e.g., Acme Pharma" />
+                      </div>
+                      <div class="mb-3">
+                        <label for="notesInput" class="form-label">Notes</label>
+                        <textarea id="notesInput" class="form-control" rows="3" placeholder="Optional context"></textarea>
+                      </div>
+                      <button type="button" class="btn btn-primary" disabled>Submit (static)</button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-lg-7">
+                <div class="card h-100">
+                  <div class="card-header">Approval History</div>
+                  <div class="card-body">
+                    <div class="table-responsive">
+                      <table class="table table-sm align-middle">
+                        <thead class="table-light">
+                          <tr>
+                            <th>Batch ID</th>
+                            <th>Requester</th>
+                            <th>Status</th>
+                            <th>Timestamp</th>
+                          </tr>
+                        </thead>
+                        <tbody id="approvalHistory"></tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Alerts & Anomalies -->
+          <section id="section-alerts" class="section d-none">
+            <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-2">
+              <h2 class="h5 m-0">Alerts & Anomalies</h2>
+              <div class="input-group" style="max-width: 240px;">
+                <span class="input-group-text">Status</span>
+                <select class="form-select" id="alertsFilter">
+                  <option value="All" selected>All</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Resolved">Resolved</option>
+                </select>
+              </div>
+            </div>
+            <ul class="list-group" id="alertsList"></ul>
+          </section>
+
+          <!-- Reports & Logs -->
+          <section id="section-reports" class="section d-none">
+            <h2 class="h5">Reports & Logs</h2>
+            <div class="row g-3">
+              <div class="col-12 col-lg-4">
+                <div class="card h-100">
+                  <div class="card-header">Downloadable Reports</div>
+                  <div class="card-body d-grid gap-2">
+                    <button class="btn btn-outline-secondary" id="btnDownloadCompliance">Monthly Compliance Report (PDF)</button>
+                    <button class="btn btn-outline-secondary" id="btnDownloadShipments">Shipment Summary (CSV)</button>
+                    <button class="btn btn-outline-secondary" id="btnDownloadIot">IoT Metrics (JSON)</button>
+                  </div>
+                </div>
+              </div>
+              <div class="col-12 col-lg-8">
+                <div class="card h-100">
+                  <div class="card-header">System Log Viewer</div>
+                  <div class="card-body">
+                    <div class="log-viewer" id="logViewer"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Live Tracking Map -->
+          <section id="section-map" class="section d-none">
+            <h2 class="h5">Live Location Tracking</h2>
+            <div class="card">
+              <div class="card-body p-0">
+                <div id="liveMap" style="height: 480px; width: 100%;"></div>
+              </div>
+            </div>
+            <div class="small text-secondary mt-2">This map uses OpenStreetMap. Locations update every 5 seconds for in-transit batches (simulated).</div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Batch detail modal -->
+    <div class="modal fade" id="batchModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Batch Details</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-2"><strong>Batch ID:</strong> <span id="modalBatchId">—</span></div>
+            <div class="mb-2"><strong>Manufacturer:</strong> <span id="modalManufacturer">—</span></div>
+            <div class="mb-3"><strong>Status:</strong> <span id="modalStatus">—</span></div>
+            <h6 class="mb-2">Journey Timeline</h6>
+            <ul class="list-group" id="modalTimeline"></ul>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="app.js"></script>
+  </body>
+  </html>
+
+
